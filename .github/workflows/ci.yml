@@ -16,6 +16,14 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -e ".[dev]"
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 1.21.4
+      - name: Governance policies (OPA) format, compile and unit tests
+        run: |
+          opa fmt --list --fail policies
+          opa check --strict policies
+          opa test policies -v
       - run: ruff check .
       - run: ruff format --check .
       - name: SQL lint (dbt models and tests)

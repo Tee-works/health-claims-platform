@@ -12,3 +12,4 @@ sources:
         description: Telemedicine consultations from the paginated API. Pages overlap, so ids repeat.
       - name: members
         description: Monthly membership snapshots from the core system. Contains personal data.
+        meta: {contains_pii: true}

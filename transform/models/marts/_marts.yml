@@ -39,38 +39,61 @@ models:
       - {name: batch_id, data_type: varchar, description: Ingestion batch; joins to lake/_manifest.json.}
 
   - name: fct_consultations
+    description: One row per telemedicine consultation, de-duplicated across overlapping API pages, pseudonymous.
+    config:
+      meta: {owner: data-engineering}
     columns:
       - name: consultation_id
         data_tests: [unique, not_null]
 
   - name: dim_member
     description: Members with no personal data. Age is banded; names, phone and date of birth are in restricted.member_pii.
+    config:
+      meta: {owner: data-engineering}
     columns:
       - name: member_key
         data_tests: [unique, not_null]
 
   - name: dim_provider
+    description: Partner hospitals and clinics, with state and provider type.
+    config:
+      meta: {owner: provider-relations}
     columns:
       - name: provider_id
         data_tests: [unique, not_null]
 
   - name: dim_plan
+    description: Health plans with monthly premium and annual limit.
+    config:
+      meta: {owner: data-engineering}
     columns:
       - name: plan_id
         data_tests: [unique, not_null]
 
   - name: dim_employer
+    description: Corporate clients whose staff are covered, with sector. Read by the employer loss ratio report, so its shape is a contract.
+    config:
+      contract: {enforced: true}
+      meta: {owner: data-engineering}
     columns:
       - name: employer_id
+        data_type: varchar
         data_tests: [unique, not_null]
+      - {name: employer_name, data_type: varchar}
+      - {name: sector, data_type: varchar}
 
   - name: dim_diagnosis
+    description: ICD-10 diagnosis codes with description and service category.
+    config:
+      meta: {owner: data-engineering}
     columns:
       - name: diagnosis_code
         data_tests: [unique, not_null]
 
   - name: mart_member_months
     description: One row per member per month of cover; the denominator for per-member metrics.
+    config:
+      meta: {owner: data-engineering}
     data_tests:
       - unique_combination:
           arguments: {columns: [member_key, month]}
@@ -81,6 +104,7 @@ models:
     description: Approved claims divided by premium, per employer per month.
     config:
       contract: {enforced: true}
+      meta: {owner: analytics}
     data_tests:
       - unique_combination:
           arguments: {columns: [employer_id, month]}
@@ -95,6 +119,8 @@ models:
 
   - name: mart_provider_utilisation
     description: Claims, members served, amounts and rejection rate per provider per month.
+    config:
+      meta: {owner: provider-relations}
     data_tests:
       - unique_combination:
           arguments: {columns: [provider_id, month]}

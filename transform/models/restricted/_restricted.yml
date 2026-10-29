@@ -3,7 +3,8 @@ version: 2
 models:
   - name: member_pii
     description: Identifiable member data. Restricted schema, no analyst access.
-    meta: {contains_pii: true, access_zone: restricted}
+    config:
+      meta: {owner: data-engineering, contains_pii: true, access_zone: restricted}
     columns:
       - name: member_id
         data_tests: [unique, not_null]

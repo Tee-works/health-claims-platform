@@ -6,8 +6,9 @@ Everything runs locally on DuckDB in about 20 seconds. The production target is 
 
 ```bash
 pip install -e ".[dev]"
-claims all          # generate -> ingest -> dbt build -> train -> score -> lineage
-pytest -q           # 52 tests; builds the whole platform in a temp directory
+claims all          # generate -> ingest -> dbt build -> policy -> train -> score -> lineage
+pytest -q           # 58 tests; builds the whole platform in a temp directory
+claims policy       # governance rules as code (OPA) against what was built
 make impact M=stg_claims
 ```
 
@@ -77,6 +78,20 @@ exposure      provider_performance_report
 
 The pull-request template asks for that output, and `CODEOWNERS` requires review on access control and anything touching personal data.
 
+## Governance as code (`policies/`, OPA)
+
+The rules a governance policy document would state are written in Rego and evaluated by [OPA](https://www.openpolicyagent.org/) on every build, against what was actually built: dbt's manifest supplies each model's zone, owner, contract and lineage, and the warehouse catalogue supplies the columns each table really has (`src/claims/policy.py`).
+
+| Rule | Why |
+|---|---|
+| Nothing outside the restricted zone reads from it, and no dashboard or model is built on it | Identifiable data stays in one place with one access path |
+| No analytics column is personal data, by the warehouse's real columns | Analysts can read analytics; the YAML can be wrong, the catalogue cannot |
+| Every analytics and restricted table has an owner and a description; every exposure has an owner email | Someone is accountable for each table and report |
+| A high-maturity exposure depends only on models with enforced contracts | What a critical report reads cannot change shape silently |
+| Any source that feeds restricted data is declared `contains_pii` | Classification starts where the data enters |
+
+`claims policy` prints each violation and fails. The first run against this project found 17 real gaps (missing owners and descriptions, an uncontracted table behind the loss-ratio report, the membership source not declared as personal data); they were fixed in the models' YAML, which is the workflow the rules are meant to create. Each rule has a passing and a failing case in `policies/dataflow_test.rego` (`opa test policies`), and `tests/test_policy.py` checks the real build complies and a deliberately broken one is denied. The list of personal-data column names is shared with the dbt guard test, and a test keeps the two in step.
+
 ## Claim risk scoring (`src/claims/ml`)
 
 Known patterns are rules; unusual ones are left to a model. Two rules (service outside cover, same visit billed twice) lift a claim to the top. An isolation forest on six features from the analytics schema orders everything else. The model never reads personal data.
@@ -119,7 +134,7 @@ How it is tested:
 
 ## CI
 
-Every push runs: ruff, sqlfluff on all dbt SQL, the 52 tests (which build the platform end to end), a check that the lineage doc and seeds are current, `terraform fmt`, `validate` and `test`, checkov, and the Airflow DAG import.
+Every push runs: the OPA policy format check, compile and unit tests, ruff, sqlfluff on all dbt SQL, the 58 tests (which build the platform end to end), a check that the lineage doc and seeds are current, `terraform fmt`, `validate` and `test`, checkov, and the Airflow DAG import.
 
 ## Limitations
 

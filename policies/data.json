@@ -1,0 +1,15 @@
+{
+  "classification": {
+    "personal_columns": [
+      "member_id",
+      "first_name",
+      "last_name",
+      "full_name",
+      "phone",
+      "email",
+      "date_of_birth",
+      "dob",
+      "address"
+    ]
+  }
+}

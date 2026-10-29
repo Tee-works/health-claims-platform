@@ -3,6 +3,7 @@
     claims generate    synthetic source files and reference seeds
     claims ingest      landing zone -> lake (contracts, quarantine, manifest)
     claims transform   dbt build: models, contracts, tests, unit tests
+    claims policy      governance rules as code (OPA) against the built platform
     claims train       train and register the claim risk model
     claims score       score current claims (refuses on drift unless --force)
     claims lineage     regenerate docs/lineage.md
@@ -55,6 +56,18 @@ def transform(paths: Paths, full_refresh: bool = False) -> None:
         raise SystemExit("dbt build failed")
 
 
+def policy(required: bool = True) -> None:
+    import shutil
+
+    from claims.policy import main as run
+
+    if shutil.which("opa") is None and not required:
+        print("opa not installed: skipping the policy check (CI always runs it)", file=sys.stderr)
+        return
+    if run([]) != 0:
+        raise SystemExit("governance policy check failed")
+
+
 def train(paths: Paths) -> None:
     from claims.ml.model import train as fit
 
@@ -77,7 +90,8 @@ def lineage(paths: Paths) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="claims", description=__doc__.splitlines()[0])
     parser.add_argument(
-        "stage", choices=["generate", "ingest", "transform", "train", "score", "lineage", "all"]
+        "stage",
+        choices=["generate", "ingest", "transform", "policy", "train", "score", "lineage", "all"],
     )
     parser.add_argument("--full-refresh", action="store_true")
     parser.add_argument("--force", action="store_true", help="score even if drift is detected")
@@ -89,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         "generate": lambda: generate(paths),
         "ingest": lambda: ingest(paths),
         "transform": lambda: transform(paths, args.full_refresh),
+        "policy": lambda: policy(required=args.stage == "policy"),
         "train": lambda: train(paths),
         "score": lambda: score(paths, args.force),
         "lineage": lambda: lineage(paths),
