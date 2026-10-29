@@ -1,0 +1,7 @@
+environment = "prod"
+role_principals = {
+  analyst   = ["arn:aws:iam::123456789012:role/AWSReservedSSO_DataAnalyst_abc123"]
+  ingest    = ["arn:aws:iam::123456789012:role/claims-pipeline-runner"]
+  transform = ["arn:aws:iam::123456789012:role/claims-pipeline-runner"]
+  ml        = ["arn:aws:iam::123456789012:role/claims-pipeline-runner"]
+}

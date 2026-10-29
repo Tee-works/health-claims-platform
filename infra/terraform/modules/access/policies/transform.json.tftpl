@@ -1,0 +1,53 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadModelInputs",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": ["${lake}/raw/*", "${lake}/staging/*", "${lake}/restricted/*", "${lake}/analytics/*"]
+    },
+    {
+      "Sid": "WriteModelledZones",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["${lake}/staging/*", "${lake}/restricted/*", "${lake}/analytics/*"]
+    },
+    {
+      "Sid": "ListLake",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
+      "Resource": ["${lake}"]
+    },
+    {
+      "Sid": "EngineeringQueryResults",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:ListBucket", "s3:GetBucketLocation"],
+      "Resource": ["${results}", "${results}/engineering/*"]
+    },
+    {
+      "Sid": "UseBothKeys",
+      "Effect": "Allow",
+      "Action": ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"],
+      "Resource": ["${sensitive_key}", "${analytics_key}"]
+    },
+    {
+      "Sid": "EngineeringWorkgroup",
+      "Effect": "Allow",
+      "Action": ["athena:StartQueryExecution", "athena:GetQueryExecution", "athena:GetQueryResults", "athena:StopQueryExecution", "athena:GetWorkGroup"],
+      "Resource": ["${engineering_workgroup}"]
+    },
+    {
+      "Sid": "ManageClaimsCatalog",
+      "Effect": "Allow",
+      "Action": ["glue:GetDatabase", "glue:GetDatabases", "glue:GetTable", "glue:GetTables", "glue:GetPartitions", "glue:CreateTable", "glue:UpdateTable", "glue:DeleteTable", "glue:BatchCreatePartition", "glue:BatchDeletePartition"],
+      "Resource": ["${catalog}", "${database_prefix}_*", "${table_prefix}_*/*"]
+    },
+    {
+      "Sid": "LakeFormationDataAccess",
+      "Effect": "Allow",
+      "Action": ["lakeformation:GetDataAccess"],
+      "Resource": ["*"]
+    }
+  ]
+}

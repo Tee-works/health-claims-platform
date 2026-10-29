@@ -1,0 +1,25 @@
+[sqlfluff]
+dialect = duckdb
+templater = jinja
+max_line_length = 110
+exclude_rules = LT05, ST06, AM04, RF04
+large_file_skip_byte_limit = 40000
+
+[sqlfluff:templater:jinja]
+apply_dbt_builtins = True
+load_macros_from_path = transform/macros
+
+[sqlfluff:templater:jinja:context]
+coverage_start = 2025-01-01
+incremental_lookback_days = 60
+pii_salt = test
+
+[sqlfluff:indentation]
+tab_space_size = 4
+indent_unit = space
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower

@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: stg_claims
+    description: Typed claim submissions, latest delivery of each (claim_ref, resubmission_no).
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [claim_ref, resubmission_no]}
+    columns:
+      - name: claim_ref
+        data_tests: [not_null]
+      - name: provider_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('providers'), field: provider_id}
+      - name: diagnosis_code
+        data_tests:
+          - relationships:
+              arguments: {to: ref('diagnosis_codes'), field: diagnosis_code}
+              config: {severity: warn}
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments: {values: [approved, rejected, pending]}
+
+  - name: stg_consultations
+    columns:
+      - name: consultation_id
+        data_tests: [unique, not_null]
+
+  - name: stg_member_snapshots
+    description: All membership snapshots. Personal data; restricted.
+
+  - name: stg_members
+    columns:
+      - name: member_id
+        data_tests: [unique, not_null]
+      - name: plan_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('plans'), field: plan_id}

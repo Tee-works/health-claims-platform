@@ -1,0 +1,20 @@
+# Legacy hospital systems: semicolons, compact dates, money in kobo, terse codes.
+format: C
+delimiter: ";"
+date_format: "%Y%m%d"
+amount: kobo           # 1234500 = N12,345.00
+columns:
+  claim_ref: ref
+  resubmission_no: resub
+  member_id: enrollee_no
+  service_date: svc_dt
+  diagnosis_code: dx
+  service_category: cat
+  billed_amount: billed_kobo
+  approved_amount: approved_kobo
+  status: st
+  submitted_on: submitted
+status_map:
+  A: approved
+  R: rejected
+  P: pending

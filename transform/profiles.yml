@@ -1,0 +1,17 @@
+# Local development runs on DuckDB over the parquet lake. Production runs the
+# same models on Athena over S3 (pip install dbt-athena-community).
+claims:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('CLAIMS_WAREHOUSE', '../data/warehouse.duckdb') }}"
+      threads: 4
+    prod:
+      type: athena
+      s3_staging_dir: "{{ env_var('ATHENA_STAGING_DIR', 's3://set-me/athena-staging/') }}"
+      region_name: af-south-1
+      database: awsdatacatalog
+      schema: analytics
+      work_group: engineering
+      threads: 4

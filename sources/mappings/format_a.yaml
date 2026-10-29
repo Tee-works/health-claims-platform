@@ -1,0 +1,20 @@
+# Hospitals on the insurer's standard template.
+format: A
+delimiter: ","
+date_format: "%Y-%m-%d"
+amount: plain          # 12345.00
+columns:
+  claim_ref: claim_ref
+  resubmission_no: resubmission_no
+  member_id: member_id
+  service_date: service_date
+  diagnosis_code: icd10
+  service_category: service_category
+  billed_amount: billed_amount
+  approved_amount: approved_amount
+  status: status
+  submitted_on: submitted_on
+status_map:
+  approved: approved
+  rejected: rejected
+  pending: pending

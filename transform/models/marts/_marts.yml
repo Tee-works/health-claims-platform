@@ -1,0 +1,131 @@
+version: 2
+
+models:
+  - name: fct_claims
+    description: One row per claim, current state, pseudonymous. Incremental with a 60-day lookback for late resubmissions.
+    config:
+      contract: {enforced: true}
+      meta: {owner: data-engineering, access_zone: analytics}
+    columns:
+      - {name: claim_ref, data_type: varchar, data_tests: [unique, not_null]}
+      - {name: resubmission_no, data_type: integer}
+      - name: member_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_member'), field: member_key}
+      - name: provider_id
+        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_provider'), field: provider_id}
+      - {name: plan_id, data_type: varchar, data_tests: [not_null]}
+      - {name: employer_id, data_type: varchar, data_tests: [not_null]}
+      - {name: service_date, data_type: date, data_tests: [not_null]}
+      - {name: service_month, data_type: date}
+      - {name: submitted_on, data_type: date}
+      - {name: diagnosis_code, data_type: varchar}
+      - {name: service_category, data_type: varchar}
+      - name: status
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments: {values: [approved, rejected, pending]}
+      - {name: billed_amount_ngn, data_type: "decimal(14,2)", data_tests: [not_null]}
+      - {name: approved_amount_ngn, data_type: "decimal(14,2)"}
+      - {name: is_within_coverage, data_type: boolean, description: "False when the service date falls outside the member's cover. Paid claims with False are recoverable."}
+      - {name: source_file, data_type: varchar, description: Landing-zone file the claim was delivered in.}
+      - {name: batch_id, data_type: varchar, description: Ingestion batch; joins to lake/_manifest.json.}
+
+  - name: fct_consultations
+    columns:
+      - name: consultation_id
+        data_tests: [unique, not_null]
+
+  - name: dim_member
+    description: Members with no personal data. Age is banded; names, phone and date of birth are in restricted.member_pii.
+    columns:
+      - name: member_key
+        data_tests: [unique, not_null]
+
+  - name: dim_provider
+    columns:
+      - name: provider_id
+        data_tests: [unique, not_null]
+
+  - name: dim_plan
+    columns:
+      - name: plan_id
+        data_tests: [unique, not_null]
+
+  - name: dim_employer
+    columns:
+      - name: employer_id
+        data_tests: [unique, not_null]
+
+  - name: dim_diagnosis
+    columns:
+      - name: diagnosis_code
+        data_tests: [unique, not_null]
+
+  - name: mart_member_months
+    description: One row per member per month of cover; the denominator for per-member metrics.
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [member_key, month]}
+    columns:
+      - {name: premium_ngn, data_tests: [not_null]}
+
+  - name: mart_loss_ratio
+    description: Approved claims divided by premium, per employer per month.
+    config:
+      contract: {enforced: true}
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [employer_id, month]}
+    columns:
+      - {name: employer_id, data_type: varchar, data_tests: [not_null]}
+      - {name: month, data_type: date, data_tests: [not_null]}
+      - {name: member_months, data_type: bigint}
+      - {name: premium_ngn, data_type: "decimal(16,2)"}
+      - {name: approved_claims, data_type: bigint}
+      - {name: approved_claims_ngn, data_type: "decimal(16,2)"}
+      - {name: loss_ratio, data_type: "decimal(8,4)"}
+
+  - name: mart_provider_utilisation
+    description: Claims, members served, amounts and rejection rate per provider per month.
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [provider_id, month]}
+
+exposures:
+  - name: employer_loss_ratio_report
+    label: Employer loss ratio (Power BI)
+    type: dashboard
+    maturity: high
+    description: Used by sales and underwriting when renewing and pricing corporate plans.
+    owner: {name: Analytics, email: analytics@example.com}
+    depends_on:
+      - ref('mart_loss_ratio')
+      - ref('dim_employer')
+
+  - name: provider_performance_report
+    label: Provider performance (Power BI)
+    type: dashboard
+    maturity: medium
+    description: Used by provider relations to review tariffs, rejections and utilisation.
+    owner: {name: Provider relations, email: providers@example.com}
+    depends_on:
+      - ref('mart_provider_utilisation')
+      - ref('dim_provider')
+
+  - name: claim_risk_model
+    label: Claim risk scoring
+    type: ml
+    maturity: medium
+    description: Isolation-forest model that ranks claims for review (claims.ml).
+    owner: {name: Data engineering, email: data@example.com}
+    depends_on:
+      - ref('fct_claims')
+      - ref('dim_member')

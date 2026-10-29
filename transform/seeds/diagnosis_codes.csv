@@ -1,0 +1,13 @@
+diagnosis_code,description,service_category
+B54,"Malaria, unspecified",outpatient
+J06.9,Upper respiratory infection,outpatient
+I10,Essential hypertension,outpatient
+E11.9,Type 2 diabetes without complications,outpatient
+A09,Gastroenteritis,outpatient
+N39.0,Urinary tract infection,laboratory
+M54.5,Low back pain,imaging
+Z00.0,General medical examination,laboratory
+A01.0,Typhoid fever,inpatient
+O80,Single spontaneous delivery,maternity
+K35.80,Acute appendicitis,surgery
+R50.9,"Fever, unspecified",pharmacy

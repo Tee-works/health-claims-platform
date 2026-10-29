@@ -1,0 +1,54 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadAnalyticsZone",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": ["${lake}/analytics/*", "${lake}/ml/*"]
+    },
+    {
+      "Sid": "WriteModelArtifactsAndScores",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject"],
+      "Resource": ["${lake}/ml/*"]
+    },
+    {
+      "Sid": "ListMlPrefixes",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["${lake}"],
+      "Condition": {"StringLike": {"s3:prefix": ["analytics/*", "ml/*"]}}
+    },
+    {
+      "Sid": "UseAnalyticsKey",
+      "Effect": "Allow",
+      "Action": ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"],
+      "Resource": ["${analytics_key}"]
+    },
+    {
+      "Sid": "ReadAnalyticsCatalog",
+      "Effect": "Allow",
+      "Action": ["glue:GetDatabase", "glue:GetTable", "glue:GetTables", "glue:GetPartitions"],
+      "Resource": ["${catalog}", "${database_prefix}_analytics", "${table_prefix}_analytics/*"]
+    },
+    {
+      "Sid": "LakeFormationDataAccess",
+      "Effect": "Allow",
+      "Action": ["lakeformation:GetDataAccess"],
+      "Resource": ["*"]
+    },
+    {
+      "Sid": "DenySensitiveZones",
+      "Effect": "Deny",
+      "Action": ["s3:*"],
+      "Resource": ["${lake}/landing/*", "${lake}/raw/*", "${lake}/quarantine/*", "${lake}/staging/*", "${lake}/restricted/*"]
+    },
+    {
+      "Sid": "DenySensitiveKey",
+      "Effect": "Deny",
+      "Action": ["kms:*"],
+      "Resource": ["${sensitive_key}"]
+    }
+  ]
+}

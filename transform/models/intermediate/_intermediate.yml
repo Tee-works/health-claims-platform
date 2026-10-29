@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: int_claims_latest
+    description: Current state of each claim (latest resubmission).
+    columns:
+      - name: claim_ref
+        data_tests: [unique, not_null]
+
+  - name: int_claims_orphaned
+    description: Claims for members the insurer has no record of. Expected to be small; a jump means a hospital is sending the wrong member numbers.
+    data_tests:
+      - row_count_at_most:
+          arguments: {max_rows: 50}
+
+  - name: int_member_plan_history
+    description: Plan per member over time (SCD Type 2) from monthly snapshots.
+    data_tests:
+      - unique_combination:
+          arguments: {columns: [member_id, valid_from]}
+
+unit_tests:
+  - name: latest_resubmission_wins
+    description: A corrected resubmission replaces the rejected original.
+    model: int_claims_latest
+    given:
+      - input: ref('stg_claims')
+        rows:
+          - {claim_ref: "LAIKE01-2025-000001", resubmission_no: 0, status: rejected, submitted_on: "2025-01-10"}
+          - {claim_ref: "LAIKE01-2025-000001", resubmission_no: 1, status: approved, submitted_on: "2025-02-14"}
+          - {claim_ref: "LAIKE01-2025-000002", resubmission_no: 0, status: approved, submitted_on: "2025-01-12"}
+    expect:
+      rows:
+        - {claim_ref: "LAIKE01-2025-000001", resubmission_no: 1, status: approved}
+        - {claim_ref: "LAIKE01-2025-000002", resubmission_no: 0, status: approved}
+
+  - name: plan_upgrade_closes_previous_period
+    description: An upgrade seen in a later snapshot ends the earlier plan's validity.
+    model: int_member_plan_history
+    given:
+      - input: ref('stg_member_snapshots')
+        rows:
+          - {member_id: "RH-000001", plan_id: P-SLV, snapshot_date: "2026-04-30", enrolled_on: "2025-03-01"}
+          - {member_id: "RH-000001", plan_id: P-GLD, snapshot_date: "2026-05-31", enrolled_on: "2025-03-01"}
+          - {member_id: "RH-000001", plan_id: P-GLD, snapshot_date: "2026-06-30", enrolled_on: "2025-03-01"}
+    expect:
+      rows:
+        - {member_id: "RH-000001", plan_id: P-SLV, valid_from: "2025-03-01", valid_to: "2026-05-31"}
+        - {member_id: "RH-000001", plan_id: P-GLD, valid_from: "2026-05-31", valid_to: "9999-12-31"}

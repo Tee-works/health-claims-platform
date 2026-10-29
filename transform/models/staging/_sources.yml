@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: lake
+    description: Standardised parquet written by `claims.ingest`. Only rows that passed the ingestion contract land here; the rest are in lake/quarantine.
+    meta:
+      external_location: "read_parquet('{{ env_var('CLAIMS_LAKE_DIR', 'data/lake') }}/raw/{name}/*.parquet', union_by_name = true)"
+    tables:
+      - name: claims
+        description: Hospital claim lines from monthly files in three house formats, one row per claim submission.
+      - name: consultations
+        description: Telemedicine consultations from the paginated API. Pages overlap, so ids repeat.
+      - name: members
+        description: Monthly membership snapshots from the core system. Contains personal data.

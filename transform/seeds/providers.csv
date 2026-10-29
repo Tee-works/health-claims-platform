@@ -1,0 +1,16 @@
+provider_id,provider_code,provider_name,state,provider_type,file_format
+PRV001,LAIKE01,Ikeja Pharmacy,Lagos,pharmacy,A
+PRV002,LALEK02,Lekki Family Clinic,Lagos,network_clinic,A
+PRV003,LASUR03,Surulere Medical Centre,Lagos,partner_hospital,A
+PRV004,LAYAB04,Yaba Pharmacy,Lagos,pharmacy,A
+PRV005,LAGBA05,Gbagada Specialist Hospital,Lagos,partner_hospital,C
+PRV006,LAAJA06,Ajah Medical Centre,Lagos,partner_hospital,B
+PRV007,LAIKO07,Ikoyi Medical Centre,Lagos,partner_hospital,A
+PRV008,LAFES08,Festac Medical Centre,Lagos,partner_hospital,C
+PRV009,FCWUS09,Wuse Specialist Hospital,FCT,partner_hospital,A
+PRV010,FCGAR10,Garki Family Clinic,FCT,network_clinic,B
+PRV011,FCMAI11,Maitama Specialist Hospital,FCT,partner_hospital,C
+PRV012,FCGWA12,Gwarinpa Family Clinic,FCT,network_clinic,A
+PRV013,RIGRA13,GRA Medical Centre,Rivers,partner_hospital,B
+PRV014,RITRA14,Trans-Amadi Specialist Hospital,Rivers,partner_hospital,C
+PRV015,RIRUM15,Rumuola Medical Centre,Rivers,partner_hospital,C

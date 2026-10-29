@@ -1,0 +1,42 @@
+name: claims
+version: "0.1.0"
+config-version: 2
+profile: claims
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Salt for pseudonymous member keys. Set PII_SALT from a secret store in production.
+  pii_salt: "{{ env_var('PII_SALT', 'local-dev-salt') }}"
+  coverage_start: "2025-01-01"
+  # Late resubmissions arrive up to ~50 days after the original; reprocess this window.
+  incremental_lookback_days: 60
+
+models:
+  claims:
+    staging:
+      +schema: staging
+      +materialized: view
+      +docs: {node_color: "#8E9AAF"}
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    restricted:
+      +schema: restricted
+      +materialized: table
+      +docs: {node_color: "#C00000"}
+    marts:
+      +schema: analytics
+      +materialized: table
+      +docs: {node_color: "#1F3864"}
+
+seeds:
+  claims:
+    +schema: reference
+    plans:
+      +column_types: {monthly_premium_ngn: integer, annual_limit_ngn: integer}

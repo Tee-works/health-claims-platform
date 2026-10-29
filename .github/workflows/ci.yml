@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python, dbt and the end-to-end build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - name: SQL lint (dbt models and tests)
+        run: sqlfluff lint transform/models transform/tests
+      - name: Tests (generates data, ingests, runs dbt build, trains and scores)
+        run: pytest -q
+      - name: Lineage diagram is current
+        run: |
+          claims all
+          git diff --exit-code docs/lineage.md transform/seeds
+
+  terraform:
+    name: Terraform validate and test
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
+      - name: terraform test (mocked AWS provider, no credentials)
+        run: terraform test
+
+  security:
+    name: Checkov security scan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install checkov
+      - run: checkov -d infra/terraform --framework terraform --quiet --compact --skip-download
+
+  airflow:
+    name: Airflow DAGs import
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: >
+          pip install "apache-airflow==2.10.5"
+          --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+      - name: DAGs parse with no import errors
+        env:
+          AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+        run: |
+          airflow db migrate > /dev/null
+          python - <<'PY'
+          from airflow.models import DagBag
+          bag = DagBag("orchestration/airflow/dags", include_examples=False)
+          assert not bag.import_errors, bag.import_errors
+          expected = {"claims_ingest", "claims_transform", "claims_risk_scoring", "claims_risk_retrain"}
+          assert expected <= set(bag.dag_ids), bag.dag_ids
+          print(sorted(bag.dag_ids))
+          PY

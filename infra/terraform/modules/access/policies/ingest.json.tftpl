@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadLanding",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": ["${lake}/landing/*"]
+    },
+    {
+      "Sid": "ListIngestPrefixes",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["${lake}"],
+      "Condition": {"StringLike": {"s3:prefix": ["landing/*", "raw/*", "quarantine/*"]}}
+    },
+    {
+      "Sid": "WriteRawAndQuarantine",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": ["${lake}/raw/*", "${lake}/quarantine/*"]
+    },
+    {
+      "Sid": "UseSensitiveKey",
+      "Effect": "Allow",
+      "Action": ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"],
+      "Resource": ["${sensitive_key}"]
+    }
+  ]
+}

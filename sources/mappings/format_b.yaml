@@ -1,0 +1,20 @@
+# Hospitals exporting from their own billing system, formatted for humans.
+format: B
+delimiter: ","
+date_format: "%d/%m/%Y"
+amount: naira_text     # "N12,345.00"
+columns:
+  claim_ref: Claim Reference
+  resubmission_no: Resubmission
+  member_id: Member ID
+  service_date: Date of Service
+  diagnosis_code: Diagnosis
+  service_category: Category
+  billed_amount: Amount Billed
+  approved_amount: Amount Approved
+  status: Claim Status
+  submitted_on: Date Submitted
+status_map:
+  Approved: approved
+  Rejected: rejected
+  Pending Review: pending

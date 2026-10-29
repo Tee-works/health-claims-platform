@@ -1,0 +1,5 @@
+# Changes to access control and personal data handling need a second pair of eyes.
+/infra/terraform/modules/access/   @Tee-works
+/transform/models/restricted/      @Tee-works
+/transform/macros/pseudonymise.sql @Tee-works
+*                                  @Tee-works
